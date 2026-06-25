@@ -11,6 +11,7 @@ const upload = multer({ dest: 'uploads/' });
 
 app.use(express.static('public'));
 
+// Supported types for merging into PDF
 const IMAGE_TYPES = ['.jpg', '.jpeg', '.png', '.webp', '.tiff', '.gif'];
 const PDF_TYPES = ['.pdf'];
 const DOC_TYPES = ['.docx'];
@@ -85,11 +86,13 @@ app.post('/merge', upload.array('files'), async (req, res) => {
     return res.status(400).json({ error: 'No files uploaded' });
   }
 
+  // Parse order from client (comma-separated original names)
   let order = [];
   try {
     order = JSON.parse(req.body.order || '[]');
   } catch (_) {}
 
+  // Sort files by requested order if provided
   let ordered = files;
   if (order.length > 0) {
     ordered = order.map(name => files.find(f => f.originalname === name)).filter(Boolean);
@@ -107,6 +110,7 @@ app.post('/merge', upload.array('files'), async (req, res) => {
 
     const pdfBytes = await pdfDoc.save();
 
+    // Cleanup uploads
     for (const file of files) {
       fs.unlink(file.path, () => {});
     }
