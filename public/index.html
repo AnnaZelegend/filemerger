@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>File Merger</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #0f0f13;
+      color: #e2e2e8;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 16px 80px;
+    }
+
+    h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      margin-bottom: 6px;
+      background: linear-gradient(135deg, #a78bfa, #60a5fa);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .subtitle {
+      color: #6b6b82;
+      font-size: 0.9rem;
+      margin-bottom: 36px;
+    }
+
+    .card {
+      background: #18181f;
+      border: 1px solid #2a2a38;
+      border-radius: 16px;
+      padding: 28px;
+      width: 100%;
+      max-width: 600px;
+    }
+
+    /* Drop zone */
+    #dropzone {
+      border: 2px dashed #3a3a50;
+      border-radius: 12px;
+      padding: 40px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+      position: relative;
+    }
+    #dropzone.over {
+      border-color: #a78bfa;
+      background: #1e1b2e;
+    }
+    #dropzone input[type="file"] {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+      width: 100%;
+      height: 100%;
+    }
+    #dropzone .icon { font-size: 2.4rem; margin-bottom: 10px; }
+    #dropzone p { color: #7070a0; font-size: 0.9rem; }
+    #dropzone strong { color: #a78bfa; }
+
+    /* File list */
+    #file-list {
+      list-style: none;
+      margin-top: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .file-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: #1e1e28;
+      border: 1px solid #2a2a38;
+      border-radius: 10px;
+      padding: 10px 12px;
+      cursor: grab;
+      user-select: none;
+      transition: background 0.15s;
+    }
+    .file-item.dragging { opacity: 0.4; }
+    .file-item.drag-over { border-color: #a78bfa; background: #22203a; }
+    .file-item:active { cursor: grabbing; }
+
+    .drag-handle { color: #44445a; font-size: 1.1rem; flex-shrink: 0; }
+    .file-icon { font-size: 1.3rem; flex-shrink: 0; }
+    .file-name { flex: 1; font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .file-size { color: #55556a; font-size: 0.75rem; flex-shrink: 0; }
+    .remove-btn {
+      background: none;
+      border: none;
+      color: #55556a;
+      cursor: pointer;
+      font-size: 1rem;
+      line-height: 1;
+      padding: 2px 4px;
+      border-radius: 4px;
+      transition: color 0.15s;
+      flex-shrink: 0;
+    }
+    .remove-btn:hover { color: #f87171; }
+
+    /* Output name */
+    .field-label {
+      font-size: 0.8rem;
+      color: #7070a0;
+      margin-bottom: 6px;
+      margin-top: 20px;
+      display: block;
+    }
+    #output-name {
+      width: 100%;
+      background: #1e1e28;
+      border: 1px solid #2a2a38;
+      border-radius: 10px;
+      padding: 10px 14px;
+      color: #e2e2e8;
+      font-size: 0.9rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    #output-name:focus { border-color: #a78bfa; }
+
+    /* Merge button */
+    #merge-btn {
+      margin-top: 20px;
+      width: 100%;
+      padding: 13px;
+      background: linear-gradient(135deg, #7c3aed, #2563eb);
+      border: none;
+      border-radius: 10px;
+      color: #fff;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.1s;
+    }
+    #merge-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    #merge-btn:not(:disabled):hover { opacity: 0.9; }
+    #merge-btn:not(:disabled):active { transform: scale(0.98); }
+
+    /* Status */
+    #status {
+      margin-top: 14px;
+      text-align: center;
+      font-size: 0.85rem;
+      min-height: 20px;
+    }
+    .status-ok { color: #34d399; }
+    .status-err { color: #f87171; }
+    .status-info { color: #60a5fa; }
+
+    .hint {
+      margin-top: 22px;
+      font-size: 0.75rem;
+      color: #44445a;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <h1>File Merger</h1>
+  <p class="subtitle">Combine PDFs, images, Word docs, and text files into one PDF</p>
+
+  <div class="card">
+    <div id="dropzone">
+      <input type="file" id="file-input" multiple
+        accept=".pdf,.jpg,.jpeg,.png,.webp,.tiff,.gif,.docx,.txt,.md,.csv" />
+      <div class="icon">📂</div>
+      <p><strong>Click to add files</strong> or drag and drop here</p>
+      <p style="margin-top:6px">PDF, JPG, PNG, DOCX, TXT, CSV, MD</p>
+    </div>
+
+    <ul id="file-list"></ul>
+
+    <label class="field-label" for="output-name">Output file name</label>
+    <input type="text" id="output-name" placeholder="merged" value="merged" />
+
+    <button id="merge-btn" disabled>Merge &amp; Download</button>
+    <div id="status"></div>
+
+    <p class="hint">Drag files in the list above to reorder them before merging.</p>
+  </div>
+
+  <script>
+    const fileInput = document.getElementById('file-input');
+    const dropzone = document.getElementById('dropzone');
+    const fileList = document.getElementById('file-list');
+    const mergeBtn = document.getElementById('merge-btn');
+    const outputName = document.getElementById('output-name');
+    const statusEl = document.getElementById('status');
+
+    let files = []; // { file, id }
+    let idCounter = 0;
+
+    const EXT_ICONS = {
+      pdf: '📄', jpg: '🖼️', jpeg: '🖼️', png: '🖼️', webp: '🖼️',
+      tiff: '🖼️', gif: '🖼️', docx: '📝', txt: '📃', md: '📃', csv: '📊'
+    };
+
+    function ext(name) { return name.split('.').pop().toLowerCase(); }
+    function icon(name) { return EXT_ICONS[ext(name)] || '📎'; }
+    function fmtSize(b) {
+      if (b < 1024) return b + ' B';
+      if (b < 1048576) return (b / 1024).toFixed(1) + ' KB';
+      return (b / 1048576).toFixed(1) + ' MB';
+    }
+
+    function addFiles(newFiles) {
+      for (const f of newFiles) {
+        files.push({ file: f, id: idCounter++ });
+      }
+      render();
+    }
+
+    function render() {
+      fileList.innerHTML = '';
+      for (const entry of files) {
+        const li = document.createElement('li');
+        li.className = 'file-item';
+        li.draggable = true;
+        li.dataset.id = entry.id;
+        li.innerHTML = `
+          <span class="drag-handle">⠿</span>
+          <span class="file-icon">${icon(entry.file.name)}</span>
+          <span class="file-name" title="${entry.file.name}">${entry.file.name}</span>
+          <span class="file-size">${fmtSize(entry.file.size)}</span>
+          <button class="remove-btn" data-id="${entry.id}" title="Remove">✕</button>
+        `;
+        fileList.appendChild(li);
+      }
+      mergeBtn.disabled = files.length < 1;
+      bindDrag();
+      fileList.querySelectorAll('.remove-btn').forEach(btn => {
+        btn.addEventListener('click', e => {
+          e.stopPropagation();
+          files = files.filter(f => f.id !== parseInt(btn.dataset.id));
+          render();
+        });
+      });
+    }
+
+    // Drag-to-reorder
+    let dragSrcId = null;
+    function bindDrag() {
+      fileList.querySelectorAll('.file-item').forEach(el => {
+        el.addEventListener('dragstart', e => {
+          dragSrcId = parseInt(el.dataset.id);
+          setTimeout(() => el.classList.add('dragging'), 0);
+        });
+        el.addEventListener('dragend', () => el.classList.remove('dragging'));
+        el.addEventListener('dragover', e => { e.preventDefault(); el.classList.add('drag-over'); });
+        el.addEventListener('dragleave', () => el.classList.remove('drag-over'));
+        el.addEventListener('drop', e => {
+          e.preventDefault();
+          el.classList.remove('drag-over');
+          const targetId = parseInt(el.dataset.id);
+          if (dragSrcId === targetId) return;
+          const srcIdx = files.findIndex(f => f.id === dragSrcId);
+          const tgtIdx = files.findIndex(f => f.id === targetId);
+          const [item] = files.splice(srcIdx, 1);
+          files.splice(tgtIdx, 0, item);
+          render();
+        });
+      });
+    }
+
+    // File input
+    fileInput.addEventListener('change', () => { addFiles(Array.from(fileInput.files)); fileInput.value = ''; });
+
+    // Drop zone
+    dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('over'); });
+    dropzone.addEventListener('dragleave', () => dropzone.classList.remove('over'));
+    dropzone.addEventListener('drop', e => {
+      e.preventDefault();
+      dropzone.classList.remove('over');
+      addFiles(Array.from(e.dataTransfer.files));
+    });
+
+    // Merge
+    mergeBtn.addEventListener('click', async () => {
+      if (files.length === 0) return;
+      mergeBtn.disabled = true;
+      statusEl.className = 'status-info';
+      statusEl.textContent = 'Merging…';
+
+      const form = new FormData();
+      for (const entry of files) form.append('files', entry.file, entry.file.name);
+      form.append('outputName', outputName.value.trim() || 'merged');
+      form.append('order', JSON.stringify(files.map(f => f.file.name)));
+
+      try {
+        const res = await fetch('/merge', { method: 'POST', body: form });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({ error: 'Unknown error' }));
+          throw new Error(err.error || res.statusText);
+        }
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        const name = (outputName.value.trim() || 'merged').replace(/\.pdf$/i, '') + '.pdf';
+        a.href = url;
+        a.download = name;
+        a.click();
+        URL.revokeObjectURL(url);
+        statusEl.className = 'status-ok';
+        statusEl.textContent = `Downloaded "${name}" successfully!`;
+      } catch (err) {
+        statusEl.className = 'status-err';
+        statusEl.textContent = 'Error: ' + err.message;
+      } finally {
+        mergeBtn.disabled = files.length === 0;
+      }
+    });
+  </script>
+</body>
+</html>
