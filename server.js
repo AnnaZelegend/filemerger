@@ -16,21 +16,41 @@ const PDF_TYPES = ['.pdf'];
 const DOC_TYPES = ['.docx'];
 const TEXT_TYPES = ['.txt', '.md', '.csv'];
 
+// A4 in points — all pages are normalized to this size
+const STD_WIDTH = 595;
+const STD_HEIGHT = 842;
+
+function fitToBounds(contentW, contentH, boundsW, boundsH) {
+  const scale = Math.min(boundsW / contentW, boundsH / contentH);
+  const drawW = contentW * scale;
+  const drawH = contentH * scale;
+  return { scale, drawW, drawH, x: (boundsW - drawW) / 2, y: (boundsH - drawH) / 2 };
+}
+
 async function fileToPdfPages(filePath, ext, pdfDoc) {
   if (PDF_TYPES.includes(ext)) {
     const bytes = fs.readFileSync(filePath);
     const srcPdf = await PDFDocument.load(bytes);
-    const pages = await pdfDoc.copyPages(srcPdf, srcPdf.getPageIndices());
-    pages.forEach(p => pdfDoc.addPage(p));
+    for (let i = 0; i < srcPdf.getPageCount(); i++) {
+      const embedded = await pdfDoc.embedPage(srcPdf.getPage(i));
+      const { width, height } = embedded.size();
+      const { drawW, drawH, x, y } = fitToBounds(width, height, STD_WIDTH, STD_HEIGHT);
+      const page = pdfDoc.addPage([STD_WIDTH, STD_HEIGHT]);
+      page.drawPage(embedded, { x, y, width: drawW, height: drawH });
+    }
   } else if (IMAGE_TYPES.includes(ext)) {
     const imgBytes = await sharp(filePath).jpeg({ quality: 90 }).toBuffer();
     const img = await pdfDoc.embedJpg(imgBytes);
-    const page = pdfDoc.addPage([img.width, img.height]);
-    page.drawImage(img, { x: 0, y: 0, width: img.width, height: img.height });
+    const imgMargin = 36;
+    const { drawW, drawH, x, y } = fitToBounds(
+      img.width, img.height,
+      STD_WIDTH - imgMargin * 2, STD_HEIGHT - imgMargin * 2
+    );
+    const page = pdfDoc.addPage([STD_WIDTH, STD_HEIGHT]);
+    page.drawImage(img, { x: x + imgMargin, y: y + imgMargin, width: drawW, height: drawH });
   } else if (DOC_TYPES.includes(ext)) {
     const result = await mammoth.extractRawText({ path: filePath });
-    const text = result.value;
-    await addTextToPdf(pdfDoc, text);
+    await addTextToPdf(pdfDoc, result.value);
   } else if (TEXT_TYPES.includes(ext)) {
     const text = fs.readFileSync(filePath, 'utf8');
     await addTextToPdf(pdfDoc, text);
@@ -42,8 +62,8 @@ async function addTextToPdf(pdfDoc, text) {
   const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
   const fontSize = 12;
   const margin = 50;
-  const pageWidth = 595;
-  const pageHeight = 842;
+  const pageWidth = STD_WIDTH;
+  const pageHeight = STD_HEIGHT;
   const maxWidth = pageWidth - margin * 2;
   const lineHeight = fontSize * 1.4;
 
