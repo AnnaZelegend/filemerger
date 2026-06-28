@@ -2,6 +2,7 @@ const express = require('express');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const { execFile } = require('node:child_process');
 const { PDFDocument } = require('pdf-lib');
 const sharp = require('sharp');
 const mammoth = require('mammoth');
@@ -139,6 +140,106 @@ app.post('/merge', upload.array('files'), async (req, res) => {
     res.send(Buffer.from(pdfBytes));
   } catch (err) {
     for (const file of files) fs.unlink(file.path, () => {});
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+const IMAGE_CONVERT_EXTS = new Set(['jpg','jpeg','png','webp','tiff','tif','avif','gif']);
+
+function getMimeType(ext) {
+  const m = {
+    jpg:'image/jpeg', jpeg:'image/jpeg', png:'image/png', webp:'image/webp',
+    tiff:'image/tiff', tif:'image/tiff', avif:'image/avif', gif:'image/gif',
+    epub:'application/epub+zip', mobi:'application/x-mobipocket-ebook',
+    azw3:'application/vnd.amazon.ebook', azw:'application/vnd.amazon.ebook',
+    pdf:'application/pdf', txt:'text/plain',
+  };
+  return m[ext] || 'application/octet-stream';
+}
+
+async function convertImage(srcPath, srcExt, targetFmt, outPath) {
+  const s = sharp(srcPath);
+  const t = targetFmt === 'jpg' ? 'jpeg' : targetFmt;
+  const SHARP_OPS = {
+    jpeg: () => s.jpeg({ quality: 90 }).toFile(outPath),
+    png:  () => s.png().toFile(outPath),
+    webp: () => s.webp({ quality: 90 }).toFile(outPath),
+    tiff: () => s.tiff().toFile(outPath),
+    avif: () => s.avif({ quality: 60 }).toFile(outPath),
+    gif:  () => s.gif().toFile(outPath),
+  };
+  if (!SHARP_OPS[t]) throw new Error(`Unsupported target format: ${targetFmt}`);
+  await SHARP_OPS[t]();
+}
+
+async function convertTextToPdf(srcPath, outPath) {
+  const pdfDoc = await PDFDocument.create();
+  await addTextToPdf(pdfDoc, fs.readFileSync(srcPath, 'utf8'));
+  fs.writeFileSync(outPath, await pdfDoc.save());
+}
+
+async function convertDocxToPdf(srcPath, outPath) {
+  const pdfDoc = await PDFDocument.create();
+  const { value } = await mammoth.extractRawText({ path: srcPath });
+  await addTextToPdf(pdfDoc, value);
+  fs.writeFileSync(outPath, await pdfDoc.save());
+}
+
+function convertViaEbookConvert(srcPath, outPath) {
+  return new Promise((resolve, reject) => {
+    execFile('ebook-convert', [srcPath, outPath], { timeout: 120000 }, (err, _out, stderr) => {
+      if (err?.code === 'ENOENT') {
+        reject(new Error('Calibre is not installed. Download it at calibre-ebook.com to convert ebook formats.'));
+      } else if (err) {
+        reject(new Error(stderr || err.message));
+      } else {
+        resolve();
+      }
+    });
+  });
+}
+
+async function runConversion(srcPath, srcExt, targetFmt, outPath) {
+  if (IMAGE_CONVERT_EXTS.has(srcExt)) {
+    await convertImage(srcPath, srcExt, targetFmt, outPath);
+  } else if ((srcExt === 'txt' || srcExt === 'md') && targetFmt === 'pdf') {
+    await convertTextToPdf(srcPath, outPath);
+  } else if (srcExt === 'docx' && targetFmt === 'pdf') {
+    await convertDocxToPdf(srcPath, outPath);
+  } else {
+    await convertViaEbookConvert(srcPath, outPath);
+  }
+}
+
+app.post('/convert', upload.single('file'), async (req, res) => {
+  const file = req.file;
+  const targetFmt = (req.body.targetFormat || '').toLowerCase().replace(/^\./, '');
+
+  if (!file) return res.status(400).json({ error: 'No file uploaded' });
+  if (!targetFmt) return res.status(400).json({ error: 'No target format specified' });
+
+  const srcExt = path.extname(file.originalname).toLowerCase().slice(1);
+  const outPath = file.path + '_out.' + targetFmt;
+  const cleanup = () => { fs.unlink(file.path, () => {}); fs.unlink(outPath, () => {}); };
+
+  try {
+    await runConversion(file.path, srcExt, targetFmt, outPath);
+
+    if (!fs.existsSync(outPath)) throw new Error('Conversion produced no output');
+
+    const baseName = path.basename(file.originalname, path.extname(file.originalname));
+    const outExt = targetFmt === 'jpeg' ? 'jpg' : targetFmt;
+    const outBytes = fs.readFileSync(outPath);
+    cleanup();
+
+    res.set({
+      'Content-Type': getMimeType(outExt),
+      'Content-Disposition': `attachment; filename="${baseName}.${outExt}"`,
+    });
+    res.send(Buffer.from(outBytes));
+  } catch (err) {
+    cleanup();
     console.error(err);
     res.status(500).json({ error: err.message });
   }

@@ -24,53 +24,92 @@
     font-family:"Inter",sans-serif;-webkit-font-smoothing:antialiased;
     display:flex;align-items:center;justify-content:center;padding:48px 20px;
   }
-  .unit{width:100%;max-width:560px;background:var(--panel);border:1px solid var(--hair-2)}
-  .top{display:flex;justify-content:space-between;align-items:center;padding:18px 22px;border-bottom:1px solid var(--hair)}
+  .unit{width:100%;max-width:580px;background:var(--panel);border:1px solid var(--hair-2)}
+  .top{display:flex;justify-content:space-between;align-items:center;padding:18px 24px;border-bottom:1px solid var(--hair)}
   .brand{display:flex;align-items:center;gap:12px}
-  .dot{width:11px;height:11px;border-radius:50%;background:var(--orange)}
+  .dot{width:11px;height:11px;border-radius:50%;background:var(--orange);flex-shrink:0}
   .brand h1{margin:0;font-size:17px;font-weight:600;letter-spacing:-.01em}
   .model{font-size:11px;font-weight:500;color:var(--ink-2);letter-spacing:.12em;text-transform:uppercase}
 
-  .strip{padding:14px 22px;border-bottom:1px solid var(--hair);font-size:13px;color:var(--ink-2);letter-spacing:-.005em}
-  .body{padding:22px}
+  .tabs{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid var(--hair)}
+  .tab{border:0;border-bottom:2px solid transparent;margin-bottom:-1px;background:none;padding:14px;font-family:inherit;font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-2);cursor:pointer;transition:color .12s,border-color .12s}
+  .tab.active{color:var(--orange);border-bottom-color:var(--orange)}
+  .tab:hover:not(.active){color:var(--ink)}
+
+  .body{padding:24px}
 
   .drop{
     border:1px solid var(--hair-2);background:#fafafa;
-    padding:30px 20px;text-align:center;cursor:pointer;
+    padding:32px 20px;text-align:center;cursor:pointer;
     transition:background .12s,border-color .12s;
-    position:relative;
   }
-  .drop input[type="file"]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
   .drop:hover,.drop.over{background:#fff;border-color:var(--orange)}
   .plus{width:34px;height:34px;border:1.5px solid var(--ink);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;font-size:20px;line-height:1}
-  .drop h2{margin:0 0 4px;font-size:15px;font-weight:600}
+  .drop h2{margin:0 0 5px;font-size:15px;font-weight:600}
   .drop h2 u{color:var(--orange);text-decoration-thickness:1.5px;text-underline-offset:2px}
   .drop p{margin:0;font-size:11px;color:var(--ink-2);letter-spacing:.06em}
 
-  .label{display:flex;justify-content:space-between;font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-2);margin:24px 2px 10px}
+  /* File list */
+  .row-label{display:flex;justify-content:space-between;font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-2);margin:22px 0 8px}
   ul.items{list-style:none;margin:0;padding:0;border:1px solid var(--hair)}
   ul.items:empty{display:none}
-  ul.items li{display:grid;grid-template-columns:26px 1fr auto 26px;align-items:center;gap:14px;padding:14px 14px;border-bottom:1px solid var(--hair);cursor:grab;user-select:none}
+  ul.items li{
+    display:grid;
+    grid-template-columns:32px 1fr auto 32px;
+    align-items:center;
+    gap:0;
+    padding:0;
+    border-bottom:1px solid var(--hair);
+    cursor:grab;user-select:none;
+  }
+  ul.items li.no-drag{grid-template-columns:1fr auto 32px;cursor:default}
   ul.items li:last-child{border-bottom:0}
   ul.items li.dragging{opacity:.4}
   ul.items li.drag-over{border-top:2px solid var(--orange)}
-  ul.items li:active{cursor:grabbing}
-  .no{font-variant-numeric:tabular-nums;font-weight:600;color:var(--ink-2);font-size:13px}
-  .fn{font-size:13.5px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .sz{font-size:12px;color:var(--ink-2);font-variant-numeric:tabular-nums}
-  .x{width:22px;height:22px;border:1px solid var(--hair-2);background:#fff;cursor:pointer;font-size:12px;color:var(--ink-2);line-height:1;border-radius:2px;display:flex;align-items:center;justify-content:center}
-  .x:hover{border-color:var(--orange);color:var(--orange)}
+  /* number */
+  .no{
+    display:flex;align-items:center;justify-content:center;
+    height:100%;padding:13px 0;
+    font-variant-numeric:tabular-nums;font-weight:600;color:var(--ink-2);font-size:12px;
+  }
+  /* filename */
+  .fn{
+    padding:13px 12px 13px 0;
+    font-size:13.5px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  }
+  /* size */
+  .sz{
+    padding:13px 12px;
+    font-size:12px;color:var(--ink-2);font-variant-numeric:tabular-nums;white-space:nowrap;
+  }
+  /* remove button — fills its 32px column, centered */
+  .x{
+    display:flex;align-items:center;justify-content:center;
+    width:100%;height:100%;padding:13px 0;
+    border:0;border-left:1px solid var(--hair);background:transparent;
+    cursor:pointer;font-size:11px;color:var(--ink-2);
+  }
+  .x:hover{background:#fff8f6;color:var(--orange)}
 
-  .field{margin:24px 0 20px}
+  /* Output name field */
+  .field{margin:22px 0 20px}
   .field label{display:block;font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-2);margin-bottom:8px}
-  .field .box{display:flex;align-items:center;border:1px solid var(--hair-2)}
-  .field input{flex:1;border:0;padding:12px 14px;font-family:inherit;font-size:14px;font-weight:500;color:var(--ink);outline:none}
+  .field .box{display:flex;align-items:stretch;border:1px solid var(--hair-2)}
+  .field input{flex:1;border:0;padding:11px 14px;font-family:inherit;font-size:14px;font-weight:500;color:var(--ink);outline:none;min-width:0}
   .field input:focus{box-shadow:inset 0 0 0 2px rgba(242,82,27,.25)}
-  .field .ex{font-size:13px;color:var(--ink-2);padding:0 14px;border-left:1px solid var(--hair);align-self:stretch;display:flex;align-items:center}
+  .field .ex{font-size:13px;color:var(--ink-2);padding:0 14px;border-left:1px solid var(--hair);display:flex;align-items:center;flex-shrink:0}
+  .field .sel-wrap{flex:1;position:relative;display:flex}
+  .field .sel-wrap select{flex:1;border:0;padding:11px 36px 11px 14px;font-family:inherit;font-size:14px;font-weight:500;color:var(--ink);background:transparent;outline:none;cursor:pointer;-webkit-appearance:none;appearance:none}
+  .field .sel-wrap select:disabled{color:var(--ink-2);cursor:not-allowed}
+  .field .sel-wrap::after{content:'▾';position:absolute;right:14px;top:50%;transform:translateY(-50%);pointer-events:none;color:var(--ink-2);font-size:13px}
 
+  .hint{font-size:11px;color:var(--ink-2);margin:-6px 0 20px}
+  .hint a{color:var(--orange)}
+
+  /* Action button */
   .go{
     width:100%;border:0;cursor:pointer;background:var(--orange);color:#fff;
-    font-family:inherit;font-size:15px;font-weight:600;letter-spacing:.01em;padding:15px;
+    font-family:inherit;font-size:15px;font-weight:600;letter-spacing:.01em;padding:14px;
     display:flex;align-items:center;justify-content:center;gap:10px;
     transition:background .12s;
   }
@@ -81,36 +120,47 @@
   .go.done{background:var(--green)}
   .go svg{width:16px;height:16px;flex-shrink:0}
 
-  .foot{display:flex;justify-content:space-between;align-items:center;margin-top:14px}
+  /* Footer */
+  .foot{display:flex;justify-content:space-between;align-items:center;margin-top:13px}
   .status{font-size:12px;color:var(--ink-2)}
   .status.err{color:var(--orange);font-weight:500}
   .gauge{display:flex;gap:4px}
   .gauge i{width:18px;height:5px;background:var(--hair-2);display:block;transition:background .2s}
   .gauge i.on{background:var(--orange)}
   .gauge i.done{background:var(--green)}
+
   @media(prefers-reduced-motion:reduce){*{transition:none!important}}
-  @media(max-width:460px){ul.items li{grid-template-columns:22px 1fr auto 24px;gap:10px}}
+  @media(max-width:460px){
+    .body{padding:18px}
+    ul.items li{grid-template-columns:28px 1fr auto 28px}
+    ul.items li.no-drag{grid-template-columns:1fr auto 28px}
+  }
 </style>
 </head>
 <body>
-  <section class="unit">
-    <div class="top">
-      <div class="brand"><span class="dot"></span><h1>File Merger</h1></div>
-      <span class="model">PDF · OUT</span>
-    </div>
-    <div class="strip">Combine PDFs, images, Word docs, and text files into one PDF.</div>
+<section class="unit">
+  <div class="top">
+    <div class="brand"><span class="dot"></span><h1>File Merger</h1></div>
+    <span class="model" id="top-label">PDF · OUT</span>
+  </div>
 
-    <div class="body">
-      <label class="drop" id="drop">
-        <input type="file" id="file-input" multiple aria-label="Add files"
-          accept=".pdf,.jpg,.jpeg,.png,.webp,.tiff,.gif,.docx,.txt,.md,.csv">
+  <nav class="tabs">
+    <button class="tab active" data-tab="merge">Merge files</button>
+    <button class="tab" data-tab="convert">Convert format</button>
+  </nav>
+
+  <div class="body">
+
+    <!-- ── MERGE TAB ── -->
+    <div id="panel-merge">
+      <div class="drop" id="drop-merge">
         <div class="plus">+</div>
         <h2><u>Click to add files</u> or drag and drop</h2>
         <p>PDF · JPG · PNG · DOCX · TXT · CSV · MD</p>
-      </label>
+      </div>
 
-      <div class="label"><span>Files</span><span>Order = page order</span></div>
-      <ul class="items" id="items"></ul>
+      <div class="row-label"><span>Files</span><span>Order = page order</span></div>
+      <ul class="items" id="merge-items"></ul>
 
       <div class="field">
         <label for="out">Output file name</label>
@@ -120,182 +170,383 @@
         </div>
       </div>
 
-      <button class="go" id="go" disabled>
+      <button class="go" id="merge-btn" disabled>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0l-4-4m4 4l4-4M4 21h16"/></svg>
         Merge &amp; download
       </button>
       <div class="foot">
-        <span class="status" id="status">No files added</span>
-        <span class="gauge" id="gauge"><i></i><i></i><i></i><i></i></span>
+        <span class="status" id="merge-status">No files added</span>
+        <span class="gauge" id="merge-gauge"><i></i><i></i><i></i><i></i></span>
       </div>
     </div>
-  </section>
 
-  <script>
-    const fileInput = document.getElementById('file-input');
-    const drop     = document.getElementById('drop');
-    const itemsEl  = document.getElementById('items');
-    const outEl    = document.getElementById('out');
-    const goBtn    = document.getElementById('go');
-    const statusEl = document.getElementById('status');
-    const gaugeEl  = document.getElementById('gauge');
-    const dots     = [...gaugeEl.querySelectorAll('i')];
+    <!-- ── CONVERT TAB ── -->
+    <div id="panel-convert" style="display:none">
+      <div class="drop" id="drop-convert">
+        <div class="plus">+</div>
+        <h2><u>Click to select a file</u> or drag and drop</h2>
+        <p>Images · Ebooks · Documents</p>
+      </div>
 
-    let files = [];
-    let idCtr = 0;
+      <div id="convert-file-section" style="display:none">
+        <div class="row-label"><span>Selected file</span></div>
+        <ul class="items" id="convert-item"></ul>
+      </div>
 
-    function fmtSize(b) {
-      if (b < 1024) return b + ' B';
-      if (b < 1048576) return (b / 1024).toFixed(1) + ' KB';
-      return (b / 1048576).toFixed(1) + ' MB';
-    }
+      <div class="field">
+        <label for="target-fmt">Convert to</label>
+        <div class="box">
+          <div class="sel-wrap">
+            <select id="target-fmt" disabled>
+              <option value="">— select a file first —</option>
+            </select>
+          </div>
+        </div>
+      </div>
 
-    function totalSize() {
-      return files.reduce((s, e) => s + e.file.size, 0);
-    }
+      <p class="hint" id="calibre-hint" style="display:none">
+        Document &amp; ebook conversion requires <a href="https://calibre-ebook.com/download" target="_blank" rel="noopener">Calibre</a> to be installed.
+      </p>
 
-    function setStatus(msg, cls) {
-      statusEl.textContent = msg;
-      statusEl.className = 'status' + (cls ? ' ' + cls : '');
-    }
+      <button class="go" id="convert-btn" disabled>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M7 16V4m0 0L3 8m4-4l4 4M17 8v12m0 0l4-4m-4 4l-4-4"/>
+        </svg>
+        Convert &amp; download
+      </button>
+      <div class="foot">
+        <span class="status" id="convert-status">No file selected</span>
+        <span class="gauge" id="convert-gauge"><i></i><i></i><i></i><i></i></span>
+      </div>
+    </div>
 
-    function resetGauge(cls) {
-      dots.forEach(d => { d.className = cls || ''; });
-    }
+  </div>
+</section>
 
-    function updateFooter() {
-      if (files.length === 0) {
-        setStatus('No files added');
-        resetGauge();
-      } else {
-        setStatus(files.length + ' file' + (files.length > 1 ? 's' : '') + ' · ' + fmtSize(totalSize()));
-        resetGauge();
-      }
-    }
+<script>
+  // ── shared helpers ────────────────────────────────────────
+  function fmtSize(b) {
+    if (b < 1024) return b + ' B';
+    if (b < 1048576) return (b / 1024).toFixed(1) + ' KB';
+    return (b / 1048576).toFixed(1) + ' MB';
+  }
+  function setStatus(el, msg, cls) {
+    el.textContent = msg;
+    el.className = 'status' + (cls ? ' ' + cls : '');
+  }
+  function resetGauge(dots) { dots.forEach(d => { d.className = ''; }); }
+  function doneGauge(dots)  { dots.forEach(d => { d.classList.remove('on'); d.classList.add('done'); }); }
+  function animateGauge(dots, ms = 200) {
+    let i = 0;
+    return setInterval(() => { if (i < dots.length) dots[i++].classList.add('on'); }, ms);
+  }
 
-    function addFiles(newFiles) {
-      for (const f of newFiles) files.push({ file: f, id: idCtr++ });
-      render();
-    }
-
-    function render() {
-      itemsEl.innerHTML = '';
-      files.forEach((entry, i) => {
-        const li = document.createElement('li');
-        li.draggable = true;
-        li.dataset.id = entry.id;
-        li.innerHTML =
-          '<span class="no">' + (i + 1) + '</span>' +
-          '<span class="fn" title="' + entry.file.name + '">' + entry.file.name + '</span>' +
-          '<span class="sz">' + fmtSize(entry.file.size) + '</span>' +
-          '<button class="x" aria-label="Remove">✕</button>';
-        itemsEl.appendChild(li);
-      });
-      goBtn.disabled = files.length === 0;
-      goBtn.classList.remove('done');
-      goBtn.innerHTML =
-        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0l-4-4m4 4l4-4M4 21h16"/></svg>' +
-        'Merge &amp; download';
-      bindDrag();
-      itemsEl.querySelectorAll('.x').forEach(btn => {
-        btn.addEventListener('click', e => {
-          e.stopPropagation();
-          const id = Number.parseInt(btn.closest('li').dataset.id);
-          files = files.filter(f => f.id !== id);
-          render();
-          updateFooter();
-        });
-      });
-      updateFooter();
-    }
-
-    // Drag-to-reorder
-    let dragSrcId = null;
-    function bindDrag() {
-      itemsEl.querySelectorAll('li').forEach(el => {
-        el.addEventListener('dragstart', e => {
-          dragSrcId = Number.parseInt(el.dataset.id);
-          e.stopPropagation();
-          setTimeout(() => el.classList.add('dragging'), 0);
-        });
-        el.addEventListener('dragend', () => el.classList.remove('dragging'));
-        el.addEventListener('dragover', e => { e.preventDefault(); e.stopPropagation(); el.classList.add('drag-over'); });
-        el.addEventListener('dragleave', () => el.classList.remove('drag-over'));
-        el.addEventListener('drop', e => {
-          e.preventDefault();
-          e.stopPropagation();
-          el.classList.remove('drag-over');
-          const targetId = Number.parseInt(el.dataset.id);
-          if (dragSrcId === targetId) return;
-          const si = files.findIndex(f => f.id === dragSrcId);
-          const ti = files.findIndex(f => f.id === targetId);
-          const [item] = files.splice(si, 1);
-          files.splice(ti, 0, item);
-          render();
-        });
-      });
-    }
-
-    // File input
-    fileInput.addEventListener('change', () => { addFiles(Array.from(fileInput.files)); fileInput.value = ''; });
-
-    // Drop zone
-    drop.addEventListener('dragover', e => { e.preventDefault(); drop.classList.add('over'); });
-    drop.addEventListener('dragleave', () => drop.classList.remove('over'));
-    drop.addEventListener('drop', e => {
-      e.preventDefault();
-      drop.classList.remove('over');
-      addFiles(Array.from(e.dataTransfer.files));
+  // ── tab switching ─────────────────────────────────────────
+  const tabs     = document.querySelectorAll('.tab');
+  const topLabel = document.getElementById('top-label');
+  const panels   = {
+    merge:   document.getElementById('panel-merge'),
+    convert: document.getElementById('panel-convert'),
+  };
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      tabs.forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      const which = tab.dataset.tab;
+      panels.merge.style.display   = which === 'merge'   ? '' : 'none';
+      panels.convert.style.display = which === 'convert' ? '' : 'none';
+      topLabel.textContent = which === 'merge' ? 'PDF · OUT' : 'CONVERT';
     });
+  });
 
-    // Merge
-    goBtn.addEventListener('click', async () => {
-      if (files.length === 0 || goBtn.disabled) return;
-      goBtn.disabled = true;
-      goBtn.classList.remove('done');
-      statusEl.className = 'status';
-      setStatus('Merging…');
+  // ══════════════════════════════════════════════════════════
+  // MERGE TAB
+  // ══════════════════════════════════════════════════════════
+  const mergeDropEl  = document.getElementById('drop-merge');
 
-      // animate gauge
-      resetGauge();
-      let dotIdx = 0;
-      const gaugeTimer = setInterval(() => {
-        if (dotIdx < dots.length) dots[dotIdx++].classList.add('on');
-      }, 200);
+  // File input lives off-screen — never inside the visible card
+  const fileInputEl = document.createElement('input');
+  fileInputEl.type = 'file';
+  fileInputEl.multiple = true;
+  fileInputEl.accept = '.pdf,.jpg,.jpeg,.png,.webp,.tiff,.gif,.docx,.txt,.md,.csv';
+  fileInputEl.style.cssText = 'position:fixed;top:-200vh;left:-200vw;opacity:0;pointer-events:none';
+  document.body.appendChild(fileInputEl);
+  const mergeItemsEl = document.getElementById('merge-items');
+  const outEl        = document.getElementById('out');
+  const mergeBtnEl   = document.getElementById('merge-btn');
+  const mergeStatEl  = document.getElementById('merge-status');
+  const mergeDots    = [...document.getElementById('merge-gauge').querySelectorAll('i')];
 
-      const form = new FormData();
-      for (const entry of files) form.append('files', entry.file, entry.file.name);
-      form.append('outputName', outEl.value.trim() || 'merged');
-      form.append('order', JSON.stringify(files.map(f => f.file.name)));
+  const MERGE_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0l-4-4m4 4l4-4M4 21h16"/></svg>';
 
-      try {
-        const res = await fetch('/merge', { method: 'POST', body: form });
-        if (!res.ok) {
-          const err = await res.json().catch(() => ({ error: 'Unknown error' }));
-          throw new Error(err.error || res.statusText);
-        }
-        const blob = await res.blob();
-        const url  = URL.createObjectURL(blob);
-        const a    = document.createElement('a');
-        const name = (outEl.value.trim() || 'merged').replace(/\.pdf$/i, '') + '.pdf';
-        a.href = url; a.download = name; a.click();
-        URL.revokeObjectURL(url);
+  let files = [];
+  let idCtr = 0;
 
-        clearInterval(gaugeTimer);
-        dots.forEach(d => { d.classList.remove('on'); d.classList.add('done'); });
-        goBtn.classList.add('done');
-        goBtn.textContent = '✓ Downloaded';
-        setStatus('Saved "' + name + '"');
-      } catch (err) {
-        clearInterval(gaugeTimer);
-        resetGauge();
-        setStatus('Error: ' + err.message, 'err');
-        goBtn.disabled = false;
-        goBtn.innerHTML =
-          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0l-4-4m4 4l4-4M4 21h16"/></svg>' +
-          'Merge &amp; download';
-      }
+  function totalSize() { return files.reduce((s, e) => s + e.file.size, 0); }
+
+  function updateMergeFooter() {
+    if (files.length === 0) { setStatus(mergeStatEl, 'No files added'); resetGauge(mergeDots); return; }
+    setStatus(mergeStatEl, files.length + ' file' + (files.length > 1 ? 's' : '') + ' · ' + fmtSize(totalSize()));
+    resetGauge(mergeDots);
+  }
+
+  function addMergeFiles(newFiles) {
+    for (const f of newFiles) files.push({ file: f, id: idCtr++ });
+    renderMerge();
+  }
+
+  function renderMerge() {
+    mergeItemsEl.innerHTML = '';
+    files.forEach((entry, i) => {
+      const li = document.createElement('li');
+      li.draggable = true;
+      li.dataset.id = entry.id;
+      li.innerHTML =
+        '<span class="no">' + (i + 1) + '</span>' +
+        '<span class="fn" title="' + entry.file.name + '">' + entry.file.name + '</span>' +
+        '<span class="sz">' + fmtSize(entry.file.size) + '</span>' +
+        '<button class="x" aria-label="Remove">✕</button>';
+      mergeItemsEl.appendChild(li);
     });
-  </script>
+    mergeBtnEl.disabled = files.length === 0;
+    mergeBtnEl.classList.remove('done');
+    mergeBtnEl.innerHTML = MERGE_ICON + 'Merge &amp; download';
+    bindMergeDrag();
+    mergeItemsEl.querySelectorAll('.x').forEach(btn => {
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        const id = Number.parseInt(btn.closest('li').dataset.id);
+        files = files.filter(f => f.id !== id);
+        renderMerge();
+        updateMergeFooter();
+      });
+    });
+    updateMergeFooter();
+  }
+
+  let dragSrc = null;
+  function bindMergeDrag() {
+    mergeItemsEl.querySelectorAll('li').forEach(el => {
+      el.addEventListener('dragstart', e => {
+        dragSrc = Number.parseInt(el.dataset.id);
+        e.stopPropagation();
+        setTimeout(() => el.classList.add('dragging'), 0);
+      });
+      el.addEventListener('dragend',  () => el.classList.remove('dragging'));
+      el.addEventListener('dragover', e => { e.preventDefault(); e.stopPropagation(); el.classList.add('drag-over'); });
+      el.addEventListener('dragleave',() => el.classList.remove('drag-over'));
+      el.addEventListener('drop', e => {
+        e.preventDefault(); e.stopPropagation();
+        el.classList.remove('drag-over');
+        const tid = Number.parseInt(el.dataset.id);
+        if (dragSrc === tid) return;
+        const si = files.findIndex(f => f.id === dragSrc);
+        const ti = files.findIndex(f => f.id === tid);
+        const [item] = files.splice(si, 1);
+        files.splice(ti, 0, item);
+        renderMerge();
+      });
+    });
+  }
+
+  mergeDropEl.addEventListener('click', () => fileInputEl.click());
+  fileInputEl.addEventListener('change', () => { addMergeFiles(Array.from(fileInputEl.files)); fileInputEl.value = ''; });
+  mergeDropEl.addEventListener('dragover', e => { e.preventDefault(); mergeDropEl.classList.add('over'); });
+  mergeDropEl.addEventListener('dragleave', () => mergeDropEl.classList.remove('over'));
+  mergeDropEl.addEventListener('drop', e => { e.preventDefault(); mergeDropEl.classList.remove('over'); addMergeFiles(Array.from(e.dataTransfer.files)); });
+
+  mergeBtnEl.addEventListener('click', async () => {
+    if (files.length === 0 || mergeBtnEl.disabled) return;
+    mergeBtnEl.disabled = true;
+    mergeBtnEl.classList.remove('done');
+    setStatus(mergeStatEl, 'Merging…');
+    const timer = animateGauge(mergeDots);
+
+    const form = new FormData();
+    for (const entry of files) form.append('files', entry.file, entry.file.name);
+    form.append('outputName', outEl.value.trim() || 'merged');
+    form.append('order', JSON.stringify(files.map(f => f.file.name)));
+
+    try {
+      const res = await fetch('/merge', { method: 'POST', body: form });
+      if (!res.ok) { const e = await res.json().catch(() => ({ error: 'Unknown error' })); throw new Error(e.error || res.statusText); }
+      const blob = await res.blob();
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement('a');
+      const name = (outEl.value.trim() || 'merged').replace(/\.pdf$/i, '') + '.pdf';
+      a.href = url; a.download = name; a.click();
+      URL.revokeObjectURL(url);
+      clearInterval(timer);
+      doneGauge(mergeDots);
+      mergeBtnEl.classList.add('done');
+      mergeBtnEl.textContent = '✓ Downloaded';
+      setStatus(mergeStatEl, 'Saved "' + name + '"');
+    } catch (err) {
+      clearInterval(timer); resetGauge(mergeDots);
+      setStatus(mergeStatEl, 'Error: ' + err.message, 'err');
+      mergeBtnEl.disabled = false;
+      mergeBtnEl.innerHTML = MERGE_ICON + 'Merge &amp; download';
+    }
+  });
+
+  // ══════════════════════════════════════════════════════════
+  // CONVERT TAB
+  // ══════════════════════════════════════════════════════════
+  const convertDropEl  = document.getElementById('drop-convert');
+
+  const convertInputEl = document.createElement('input');
+  convertInputEl.type = 'file';
+  convertInputEl.accept = '.jpg,.jpeg,.png,.webp,.tiff,.tif,.gif,.avif,.epub,.azw,.azw3,.mobi,.pdf,.txt,.md,.html,.rtf,.docx,.fb2,.lit,.lrf,.pdb,.prc,.pml,.rb,.snb,.tcr,.htmlz,.txtz,.oeb,.chm,.djvu,.odt,.cbz,.cbr';
+  convertInputEl.style.cssText = 'position:fixed;top:-200vh;left:-200vw;opacity:0;pointer-events:none';
+  document.body.appendChild(convertInputEl);
+  const convertSecEl   = document.getElementById('convert-file-section');
+  const convertListEl  = document.getElementById('convert-item');
+  const targetFmtEl    = document.getElementById('target-fmt');
+  const calibreHint    = document.getElementById('calibre-hint');
+  const convertBtnEl   = document.getElementById('convert-btn');
+  const convertStatEl  = document.getElementById('convert-status');
+  const convertDots    = [...document.getElementById('convert-gauge').querySelectorAll('i')];
+
+  const CONVERT_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 16V4m0 0L3 8m4-4l4 4M17 8v12m0 0l4-4m-4 4l-4-4"/></svg>';
+
+  const IMAGE_EXTS = new Set(['jpg','jpeg','png','webp','tiff','tif','avif','gif']);
+
+  // Image format targets
+  const IMG_TARGETS = [
+    { value: 'jpg',  label: 'JPG' },
+    { value: 'png',  label: 'PNG' },
+    { value: 'webp', label: 'WebP' },
+    { value: 'tiff', label: 'TIFF' },
+    { value: 'avif', label: 'AVIF' },
+  ];
+
+  // Top 20 text / document / ebook targets (all handled by Calibre)
+  const DOC_TARGETS = [
+    { value: 'epub',  label: 'EPUB' },
+    { value: 'pdf',   label: 'PDF' },
+    { value: 'mobi',  label: 'MOBI' },
+    { value: 'azw3',  label: 'AZW3' },
+    { value: 'docx',  label: 'DOCX' },
+    { value: 'txt',   label: 'TXT' },
+    { value: 'rtf',   label: 'RTF' },
+    { value: 'html',  label: 'HTML' },
+    { value: 'fb2',   label: 'FB2' },
+    { value: 'lit',   label: 'LIT' },
+    { value: 'lrf',   label: 'LRF' },
+    { value: 'htmlz', label: 'HTMLZ' },
+    { value: 'txtz',  label: 'TXTZ' },
+    { value: 'pdb',   label: 'PDB' },
+    { value: 'prc',   label: 'PRC' },
+    { value: 'pml',   label: 'PML' },
+    { value: 'rb',    label: 'RB' },
+    { value: 'snb',   label: 'SNB' },
+    { value: 'tcr',   label: 'TCR' },
+    { value: 'oeb',   label: 'OEB' },
+  ];
+
+  let convertFile = null;
+
+  function clearConvert() {
+    convertFile = null;
+    convertSecEl.style.display = 'none';
+    convertListEl.innerHTML = '';
+    targetFmtEl.innerHTML = '<option value="">— select a file first —</option>';
+    targetFmtEl.disabled = true;
+    calibreHint.style.display = 'none';
+    convertBtnEl.disabled = true;
+    convertBtnEl.classList.remove('done');
+    convertBtnEl.innerHTML = CONVERT_ICON + 'Convert &amp; download';
+    setStatus(convertStatEl, 'No file selected');
+    resetGauge(convertDots);
+  }
+
+  function setConvertFile(f) {
+    convertFile = f;
+    const ext = f.name.split('.').pop().toLowerCase();
+    const isImage = IMAGE_EXTS.has(ext);
+
+    // Filter out the same extension so you can't convert to identical format
+    const srcKey = ext === 'jpeg' ? 'jpg' : ext;
+    const targets = isImage
+      ? IMG_TARGETS.filter(t => t.value !== srcKey)
+      : DOC_TARGETS.filter(t => t.value !== srcKey);
+
+    convertSecEl.style.display = '';
+    convertListEl.innerHTML =
+      '<li class="no-drag">' +
+      '<span class="fn" title="' + f.name + '">' + f.name + '</span>' +
+      '<span class="sz">' + fmtSize(f.size) + '</span>' +
+      '<button class="x" id="remove-convert" aria-label="Remove">✕</button>' +
+      '</li>';
+    document.getElementById('remove-convert').addEventListener('click', clearConvert);
+
+    if (targets.length === 0) {
+      targetFmtEl.innerHTML = '<option value="">No conversion available</option>';
+      targetFmtEl.disabled = true;
+      calibreHint.style.display = 'none';
+      convertBtnEl.disabled = true;
+      setStatus(convertStatEl, 'Cannot convert .' + ext + ' files');
+      return;
+    }
+
+    targetFmtEl.innerHTML = targets.map(t => '<option value="' + t.value + '">' + t.label + '</option>').join('');
+    targetFmtEl.disabled = false;
+    calibreHint.style.display = isImage ? 'none' : '';
+    convertBtnEl.disabled = false;
+    convertBtnEl.classList.remove('done');
+    convertBtnEl.innerHTML = CONVERT_ICON + 'Convert &amp; download';
+    setStatus(convertStatEl, f.name + ' · ' + fmtSize(f.size));
+    resetGauge(convertDots);
+  }
+
+  convertDropEl.addEventListener('click', () => convertInputEl.click());
+  convertInputEl.addEventListener('change', () => {
+    if (convertInputEl.files[0]) setConvertFile(convertInputEl.files[0]);
+    convertInputEl.value = '';
+  });
+  convertDropEl.addEventListener('dragover', e => { e.preventDefault(); convertDropEl.classList.add('over'); });
+  convertDropEl.addEventListener('dragleave', () => convertDropEl.classList.remove('over'));
+  convertDropEl.addEventListener('drop', e => {
+    e.preventDefault(); convertDropEl.classList.remove('over');
+    const f = e.dataTransfer.files[0];
+    if (f) setConvertFile(f);
+  });
+
+  convertBtnEl.addEventListener('click', async () => {
+    if (!convertFile || convertBtnEl.disabled) return;
+    const targetFmt = targetFmtEl.value;
+    if (!targetFmt) return;
+
+    convertBtnEl.disabled = true;
+    convertBtnEl.classList.remove('done');
+    setStatus(convertStatEl, 'Converting…');
+    const timer = animateGauge(convertDots);
+
+    const form = new FormData();
+    form.append('file', convertFile, convertFile.name);
+    form.append('targetFormat', targetFmt);
+
+    try {
+      const res = await fetch('/convert', { method: 'POST', body: form });
+      if (!res.ok) { const e = await res.json().catch(() => ({ error: 'Unknown error' })); throw new Error(e.error || res.statusText); }
+      const blob = await res.blob();
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement('a');
+      const name = convertFile.name.replace(/\.[^.]+$/, '') + '.' + targetFmt;
+      a.href = url; a.download = name; a.click();
+      URL.revokeObjectURL(url);
+      clearInterval(timer);
+      doneGauge(convertDots);
+      convertBtnEl.classList.add('done');
+      convertBtnEl.textContent = '✓ Downloaded';
+      setStatus(convertStatEl, 'Saved "' + name + '"');
+    } catch (err) {
+      clearInterval(timer); resetGauge(convertDots);
+      setStatus(convertStatEl, 'Error: ' + err.message, 'err');
+      convertBtnEl.disabled = false;
+      convertBtnEl.innerHTML = CONVERT_ICON + 'Convert &amp; download';
+    }
+  });
+</script>
 </body>
 </html>
