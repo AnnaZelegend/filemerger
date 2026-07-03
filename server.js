@@ -212,6 +212,69 @@ async function runConversion(srcPath, srcExt, targetFmt, outPath) {
   }
 }
 
+// Returns sorted list of output page image paths
+async function convertPdfToImages(srcPath, targetFmt) {
+  const isJpeg = targetFmt === 'jpg';
+  const flag = isJpeg ? '-jpeg' : '-png';
+  const prefix = srcPath + '_pg';
+
+  await new Promise((resolve, reject) => {
+    execFile('pdftoppm', [flag, '-r', '150', srcPath, prefix], { timeout: 120000 }, (err, _out, stderr) => {
+      if (err?.code === 'ENOENT') {
+        reject(new Error('pdftoppm not found. Install poppler with: brew install poppler'));
+      } else if (err) {
+        reject(new Error(stderr || err.message));
+      } else {
+        resolve();
+      }
+    });
+  });
+
+  const dir = path.dirname(prefix);
+  const base = path.basename(prefix);
+  const pages = fs.readdirSync(dir)
+    .filter(f => f.startsWith(base))
+    .sort()
+    .map(f => path.join(dir, f));
+
+  if (pages.length === 0) throw new Error('PDF conversion produced no output');
+  return pages;
+}
+
+async function sendPdfAsImages(uploadedFile, targetFmt, baseName, res) {
+  let pages = [];
+  let zipPath = null;
+  try {
+    pages = await convertPdfToImages(uploadedFile.path, targetFmt);
+    fs.unlink(uploadedFile.path, () => {});
+
+    if (pages.length === 1) {
+      const imgBytes = fs.readFileSync(pages[0]);
+      fs.unlink(pages[0], () => {});
+      res.set({ 'Content-Type': getMimeType(targetFmt), 'Content-Disposition': `attachment; filename="${baseName}.${targetFmt}"` });
+      return res.send(imgBytes);
+    }
+
+    zipPath = uploadedFile.path + '_pages.zip';
+    await new Promise((resolve, reject) => {
+      execFile('zip', ['-j', zipPath, ...pages], { timeout: 60000 }, (err, _out, stderr) => {
+        if (err) reject(new Error(stderr || err.message));
+        else resolve();
+      });
+    });
+    const zipBytes = fs.readFileSync(zipPath);
+    for (const p of pages) fs.unlink(p, () => {});
+    fs.unlink(zipPath, () => {});
+    res.set({ 'Content-Type': 'application/zip', 'Content-Disposition': `attachment; filename="${baseName}_pages.zip"` });
+    res.send(zipBytes);
+  } catch (err) {
+    fs.unlink(uploadedFile.path, () => {});
+    for (const p of pages) fs.unlink(p, () => {});
+    if (zipPath) fs.unlink(zipPath, () => {});
+    throw err;
+  }
+}
+
 app.post('/convert', upload.single('file'), async (req, res) => {
   const file = req.file;
   const targetFmt = (req.body.targetFormat || '').toLowerCase().replace(/^\./, '');
@@ -220,6 +283,18 @@ app.post('/convert', upload.single('file'), async (req, res) => {
   if (!targetFmt) return res.status(400).json({ error: 'No target format specified' });
 
   const srcExt = path.extname(file.originalname).toLowerCase().slice(1);
+  const baseName = path.basename(file.originalname, path.extname(file.originalname));
+
+  if (srcExt === 'pdf' && (targetFmt === 'jpg' || targetFmt === 'png')) {
+    try {
+      await sendPdfAsImages(file, targetFmt, baseName, res);
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: err.message });
+    }
+    return;
+  }
+
   const outPath = file.path + '_out.' + targetFmt;
   const cleanup = () => { fs.unlink(file.path, () => {}); fs.unlink(outPath, () => {}); };
 
@@ -228,7 +303,6 @@ app.post('/convert', upload.single('file'), async (req, res) => {
 
     if (!fs.existsSync(outPath)) throw new Error('Conversion produced no output');
 
-    const baseName = path.basename(file.originalname, path.extname(file.originalname));
     const outExt = targetFmt === 'jpeg' ? 'jpg' : targetFmt;
     const outBytes = fs.readFileSync(outPath);
     cleanup();

@@ -409,6 +409,12 @@
 
   const CONVERT_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 16V4m0 0L3 8m4-4l4 4M17 8v12m0 0l4-4m-4 4l-4-4"/></svg>';
 
+  targetFmtEl.addEventListener('change', () => {
+    if (!targetFmtEl.dataset.srcIsPdf) return;
+    const v = targetFmtEl.value;
+    calibreHint.style.display = (v === 'jpg' || v === 'png') ? 'none' : '';
+  });
+
   const IMAGE_EXTS = new Set(['jpg','jpeg','png','webp','tiff','tif','avif','gif']);
 
   // Image format targets
@@ -418,6 +424,17 @@
     { value: 'webp', label: 'WebP' },
     { value: 'tiff', label: 'TIFF' },
     { value: 'avif', label: 'AVIF' },
+  ];
+
+  // PDF source targets (images first, then common doc formats via Calibre)
+  const PDF_TARGETS = [
+    { value: 'jpg',  label: 'JPG' },
+    { value: 'png',  label: 'PNG' },
+    { value: 'epub', label: 'EPUB' },
+    { value: 'txt',  label: 'TXT' },
+    { value: 'html', label: 'HTML' },
+    { value: 'docx', label: 'DOCX' },
+    { value: 'rtf',  label: 'RTF' },
   ];
 
   // Top 20 text / document / ebook targets (all handled by Calibre)
@@ -464,12 +481,14 @@
     convertFile = f;
     const ext = f.name.split('.').pop().toLowerCase();
     const isImage = IMAGE_EXTS.has(ext);
+    const isPdf = ext === 'pdf';
 
     // Filter out the same extension so you can't convert to identical format
     const srcKey = ext === 'jpeg' ? 'jpg' : ext;
-    const targets = isImage
-      ? IMG_TARGETS.filter(t => t.value !== srcKey)
-      : DOC_TARGETS.filter(t => t.value !== srcKey);
+    let targets;
+    if (isImage) targets = IMG_TARGETS.filter(t => t.value !== srcKey);
+    else if (isPdf) targets = PDF_TARGETS;
+    else targets = DOC_TARGETS.filter(t => t.value !== srcKey);
 
     convertSecEl.style.display = '';
     convertListEl.innerHTML =
@@ -491,7 +510,8 @@
 
     targetFmtEl.innerHTML = targets.map(t => '<option value="' + t.value + '">' + t.label + '</option>').join('');
     targetFmtEl.disabled = false;
-    calibreHint.style.display = isImage ? 'none' : '';
+    targetFmtEl.dataset.srcIsPdf = isPdf ? '1' : '';
+    calibreHint.style.display = (isImage || isPdf) ? 'none' : '';
     convertBtnEl.disabled = false;
     convertBtnEl.classList.remove('done');
     convertBtnEl.innerHTML = CONVERT_ICON + 'Convert &amp; download';
